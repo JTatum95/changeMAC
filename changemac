@@ -1,10 +1,59 @@
 #!/bin/bash
 
-echo "Enter mac address"
+usage() # Print usage for script
+{
+	cat << EOF
+changeMAC
+Description: Tool to spoof a new MAC address and restore when needed.
+If no flag is given, a random MAC will be assigned.
+Usage: ./changemac [flag]
+  -h Show help info
+  -r Use random MAC address
+  -p Restore permanent MAC address
+EOF
+}
 
-read mac
+rflag=true
 
+while getopts 'hrp' flag; do
+  case "${flag}" in
+    h) usage
+       exit 0 ;;
+    r) rflag=true ;;
+    p) pflag=true 
+	   rflag=false ;; 
+    *) error "Unexpected option ${flag}" ;;
+  esac
+done
+
+echo "Welcome to changeMAC. Type -h for help"
+echo "sudo access will be needed to run this script"
+
+curmac=$(ifconfig en0 | grep ether)
+oldmac=$(echo $curmac | sed "s/ether//")
+
+if [ "$pflag" = true ] # Restore MAC
+then
+	if [ -e permanent.txt ] # MAC to restore has been saved
+		then	
+		mac=$(<permanent.txt)
+	else
+		mac=$oldmac # MAC has not been saved, current MAC is permanent MAC
+		touch permanent.txt	
+		echo $mac > permanent.txt
+	fi
+fi
+
+if [ "$rflag" = true ] # Random MAC
+then
+	mac=$(openssl rand -hex 6 | sed 's/\(..\)/\1:/g; s/.$//')
+fi
+	
+# Disconnect from wifi and set new MAC 
 sudo ifconfig en0 down
 sudo ifconfig en0 up
 sleep 1
 sudo ifconfig en0 ether $mac
+
+echo "Old MAC:$oldmac"
+echo "New MAC: $mac"
