@@ -1,0 +1,17 @@
+#!/bin/bash
+
+echo "Restore original (o) or previous (p)?"
+read answer
+
+if [ "$answer"=="p" ];
+  then mac=$(<oldmac.txt)
+else
+  mac=70:56:81:91:72:19
+fi
+
+sudo ifconfig en0 down
+sudo ifconfig en0 up
+sleep 1
+sudo ifconfig en0 ether $mac
+
+echo "Restored MAC: $mac"

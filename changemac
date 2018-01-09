@@ -1,0 +1,10 @@
+#!/bin/bash
+
+echo "Enter mac address"
+
+read mac
+
+sudo ifconfig en0 down
+sudo ifconfig en0 up
+sleep 1
+sudo ifconfig en0 ether $mac
